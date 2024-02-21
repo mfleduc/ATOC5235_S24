@@ -4,11 +4,11 @@ rng(645651)
 addpath( '/homes/male7736/Desktop/Research/Monte-Carlo-Code' );%Monte Carlo Code
 input=struct();
 %% Input parameters
-ssa = 0.8;%Single scattering albedo: P(scattered)
+ssa = 1;%Single scattering albedo: P(scattered)
 nPhotons = 10000; %Number of photons to simulate
 opticalDepth = 1; %Optical depth of the cloud
 meanFreePath = 1; %Mean free path: Mean distance traveled before interaction 
-g = -0.75;        %Asymmetry parameter = E[cos(\theta)] where theta is the scattering angle
+g = 0    ;        %Asymmetry parameter = E[cos(\theta)] where theta is the scattering angle
 %Flags
 model = 'twostream'; %twostream: 2 stream scattering model. multi: requires full scattering pattern
 medIsIsotropic = true;
@@ -30,7 +30,13 @@ input.flags.model = model;
 input.flags.isotropicMedium = medIsIsotropic;
 results = Simulate(input);
 
-%No absorption
+%No absorption 
 % g = input.scatteringProbs(1)-input.scatteringProbs(2);
-Rtheory= opticalDepth*(1-g)*0.5/(1+opticalDepth*(1-g)*0.5);
-Ttheory= 1/(1+opticalDepth*(1-g)*0.5);
+tauBar = input.opticalDepth/input.mfp ;
+Rtheory= tauBar*(1-g)*0.5/(1+tauBar*(1-g)*0.5);
+Ttheory= 1/(1+tauBar*(1-g)*0.5);
+
+t = 0:0.01:10;
+figure;plot(t, t*(1-g)*0.5./(1+t*(1-g)*0.5))
+hold on;
+plot(t, 1./(1+t*(1-g)*0.5))
