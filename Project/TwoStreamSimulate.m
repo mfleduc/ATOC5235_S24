@@ -1,4 +1,4 @@
-function result = Simulate(input)
+function result = TwoStreamSimulate(input)
 %% result = simulate(input)
 %   Code relying on the github repository for Monte Carlo code located at 
 %   https://github.com/mfleduc/Monte-Carlo-Code for solving the radiative 
@@ -6,11 +6,13 @@ function result = Simulate(input)
 %   the MATLAB path.
 %  
 nPhotonsRemoved = 0;
-maxSteps = 1e3;
+maxSteps = 1e3*input.mfp/input.opticalDepth;
 distFn = struct;
 distFn.x = 0:1/(100*input.mfp):50*input.mfp;
 distFn.y = exp( -1*input.mfp*distFn.x );
 R=0;T=0;A=0; %Reflected, transmitted, absorbed photon count
+bins = linspace(0,input.opticalDepth, 1e3);
+binCounter = zeros(2,length(bins));%Down,up
 switch input.flags.model
     case 'twostream'
         
@@ -24,8 +26,10 @@ switch input.flags.model
             rndForAbsorption = rand(1, maxSteps+1);
             costhetas = ones(1, maxSteps+1);%Storing the cosine of the angles
             tauT = taus(1);
+            binCounter(1,bins<=tauT) = 1+binCounter(1,bins<=tauT);
             absFlag = 0;
             cnt=0;
+            lastDirFlag = 0;%0=down,1 = up;
             while ~absFlag&&tauT>0&&tauT<input.opticalDepth && cnt<maxSteps
                 % While the photon is not absorbed, the photon is in the
                 % cloud, and we don't have a ton of bouncing around (this
@@ -36,7 +40,16 @@ switch input.flags.model
                     if input.flags.isotropicMedium
                         costhetas(cnt+1) = 1-(tmp(cnt+1)>= input.scatteringProbs(1))*2;
                     end
-                    tauT = tauT+taus(cnt+1)*prod( costhetas );
+                    delTau = taus(cnt+1)*prod( costhetas );
+                    ndcs = (bins<max(tauT, tauT+delTau) & bins>min(tauT, tauT+delTau));
+                    if sign(costhetas(cnt+1))==1 %Continuing in the same direction
+                        binCounter(lastDirFlag+1, ndcs) = binCounter(lastDirFlag+1, ndcs)+1;
+                    else %Changed direction
+                        lastDirFlag = ~lastDirFlag;
+                        binCounter(lastDirFlag+1, ndcs) = binCounter(lastDirFlag+1, ndcs)+1;
+                    end
+                    
+                    tauT = tauT+delTau;
                 else
                     absFlag=1;
                 end
@@ -55,11 +68,13 @@ switch input.flags.model
     otherwise
         error('Only two stream model is implemented');
 end
+FDwnUp = binCounter/(input.Nphotons);
 R = R/(input.Nphotons-nPhotonsRemoved);
 T = T/(input.Nphotons-nPhotonsRemoved);
 A = A/(input.Nphotons-nPhotonsRemoved);
 result = struct();
 result.errCode = 0;
 result.RTA = [R,T,A];
+result.FDwnUp = FDwnUp ;
 end
 
