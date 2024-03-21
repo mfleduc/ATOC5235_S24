@@ -6,10 +6,10 @@ function result = TwoStreamSimulate(input)
 %   the MATLAB path.
 %  
 nPhotonsRemoved = 0;
-maxSteps = 1e3*input.mfp/input.opticalDepth;
-distFn = struct;
-distFn.x = 0:1/(100*input.mfp):50*input.mfp;
-distFn.y = exp( -1*input.mfp*distFn.x );
+maxSteps = max(10, ceil(1e3*input.opticalDepth));
+distFn = struct.empty();
+% distFn.x = 0:1/(100*input.mfp):50*input.mfp;
+% distFn.y = exp( -1*input.mfp*distFn.x );
 R=0;T=0;A=0; %Reflected, transmitted, absorbed photon count
 bins = linspace(0,input.opticalDepth, 1e3);
 binCounter = zeros(2,length(bins));%Down,up
@@ -18,19 +18,23 @@ switch input.flags.model
         
         for ph = 1:input.Nphotons
             taus = zeros(1, maxSteps+1);
-            stepSizes = sim.iid.MonteCarloFast( distFn, maxSteps+1,'pdf' );
+            stepSizes = sim.iid.MonteCarloFast( distFn,...
+                maxSteps+1,'Exponential',input.mfp );
             taus(1) = stepSizes.result(1);
-            %Simulate all the steps right at the start to prevent asting
+            %Simulate all the steps right at the start to prevent wasting
             %time making repeated calls to sim.iid.MonteCarloFast()
-            tmp = rand( 1, maxSteps+1 );%Will convert these into angles in the while loop
+            tmp = rand( 1, maxSteps+1 );%Will convert these into angles
+            %in the while loop
             rndForAbsorption = rand(1, maxSteps+1);
-            costhetas = ones(1, maxSteps+1);%Storing the cosine of the angles
+            costhetas = ones(1, maxSteps+1);%Storing the cosine of the 
+            %angles
             tauT = taus(1);
             binCounter(1,bins<=tauT) = 1+binCounter(1,bins<=tauT);
             absFlag = 0;
             cnt=0;
             lastDirFlag = 0;%0=down,1 = up;
-            while ~absFlag&&tauT>0&&tauT<input.opticalDepth && cnt<maxSteps
+            while ~absFlag&&tauT>0&&tauT<input.opticalDepth &&...
+                    cnt<maxSteps
                 % While the photon is not absorbed, the photon is in the
                 % cloud, and we don't have a ton of bouncing around (this
                 % is to avoid an accidental infinite loop)
@@ -38,15 +42,20 @@ switch input.flags.model
                 if rndForAbsorption(cnt)<=input.ssa
                     taus(cnt+1) = stepSizes.result(cnt+1);
                     if input.flags.isotropicMedium
-                        costhetas(cnt+1) = 1-(tmp(cnt+1)>= input.scatteringProbs(1))*2;
+                        costhetas(cnt+1) = 1-(tmp(cnt+1)>= ...
+                            input.scatteringProbs(1))*2;
                     end
                     delTau = taus(cnt+1)*prod( costhetas );
-                    ndcs = (bins<max(tauT, tauT+delTau) & bins>min(tauT, tauT+delTau));
-                    if sign(costhetas(cnt+1))==1 %Continuing in the same direction
-                        binCounter(lastDirFlag+1, ndcs) = binCounter(lastDirFlag+1, ndcs)+1;
+                    ndcs = (bins<max(tauT, tauT+delTau) & ...
+                        bins>min(tauT, tauT+delTau));
+                    if sign(costhetas(cnt+1))==1
+                        %Continuing in the same direction
+                        binCounter(lastDirFlag+1, ndcs) =...
+                            binCounter(lastDirFlag+1, ndcs)+1;
                     else %Changed direction
                         lastDirFlag = ~lastDirFlag;
-                        binCounter(lastDirFlag+1, ndcs) = binCounter(lastDirFlag+1, ndcs)+1;
+                        binCounter(lastDirFlag+1, ndcs) =...
+                            binCounter(lastDirFlag+1, ndcs)+1;
                     end
                     
                     tauT = tauT+delTau;
