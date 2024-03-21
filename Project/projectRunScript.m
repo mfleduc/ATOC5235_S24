@@ -8,9 +8,9 @@ input=struct();
 %% Input parameters
 ssa = 1;%Single scattering albedo: P(scattered)
 nPhotons = 8000; %Number of photons to simulate
-opticalDepths = [0.001,0.5:0.5:10]; %Optical depths of the cloud
+opticalDepths = [0.001,0.5:0.5:20]; %Optical depths of the cloud
 meanFreePath = 1; %Mean free path: Mean distance traveled before interaction 
-g = -0.85;%Asymmetry parameter = E[cos(\theta)] where theta is the scattering angle
+g = 0;%Asymmetry parameter = E[cos(\theta)] where theta is the scattering angle
 %Flags
 model = 'twostream'; %twostream: 2 stream scattering model. multi: requires full scattering pattern
 medIsIsotropic = true;
