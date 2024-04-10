@@ -6,13 +6,16 @@ function result = TwoStreamSimulate(input)
 %   the MATLAB path.
 %  
 nPhotonsRemoved = 0;
-maxSteps = max(10, ceil(1e3*input.opticalDepth));
+maxSteps = max(10, ceil(1e2*input.opticalDepth));
 distFn = struct.empty();
 % distFn.x = 0:1/(100*input.mfp):50*input.mfp;
 % distFn.y = exp( -1*input.mfp*distFn.x );
 R=0;T=0;A=0; %Reflected, transmitted, absorbed photon count
 bins = linspace(0,input.opticalDepth, 1e3);
 binCounter = zeros(2,length(bins));%Down,up
+travelDists = zeros(1,input.Nphotons);
+travelDisps = zeros(1,input.Nphotons);
+nSteps = zeros(1,input.Nphotons);
 switch input.flags.model
     case 'twostream'
         
@@ -67,8 +70,15 @@ switch input.flags.model
                 A=A+1;
             elseif tauT<0
                 R=R+1;
+                nSteps(ph) = cnt+1;
+                travelDists(ph) = sum(stepSizes.result(1:cnt+1));
+                travelDisps(ph) = tauT ;
             elseif tauT>=input.opticalDepth
                 T=T+1;
+                nSteps(ph) = cnt+1;
+                travelDists(ph) = sum(stepSizes.result(1:cnt+1));
+                travelDisps(ph) = tauT ;
+
             else
                 nPhotonsRemoved = nPhotonsRemoved+1;
             end
@@ -85,5 +95,8 @@ result = struct();
 result.errCode = 0;
 result.RTA = [R,T,A];
 result.FDwnUp = FDwnUp ;
+result.distances = travelDists;
+result.displacements = travelDisps; 
+result.nSteps = nSteps;
 end
 
