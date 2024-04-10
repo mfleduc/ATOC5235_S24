@@ -7,8 +7,8 @@ addpath( possiblePaths{ispc+1} );%Monte Carlo Code
 input=struct();
 %% Input parameters
 ssa = 1;%Single scattering albedo: P(scattered)
-nPhotons = 15000; %Number of photons to simulate
-opticalDepths = [ 2 ]; %Optical depths of the cloud
+nPhotons = 100000; %Number of photons to simulate
+opticalDepths = [ 1 ]; %Optical depths of the cloud
 meanFreePath = 1; %Mean free path: Mean distance traveled before interaction 
 g = 0;%Asymmetry parameter = E[cos(\theta)] where theta is the scattering angle
 %Flags
@@ -54,23 +54,23 @@ end
 %No absorption 
 % %pr3steps = @(x,z)0.25*((2*x+1).*exp(-2*x)-exp(-2*z))./((1-exp(-z))*(2-exp(-x)-exp(x-z)));
 % %pt3steps = @(x,z)0.25*exp(-z)/(1-exp(-z))*(2*(z-x)-exp(-2*x))./(2-exp(-x)-exp(x-z)) ;
-pr3steps = @(x,z)(-1*(1-exp(-x)).*(exp(-x)-exp(x-z)).*(1-exp(x-z))./(2-exp(-x)-exp(x-z)).^2 ...
-    + 1./(2-exp(-x)-exp(x-z)).*((2*exp(-x)-1).*(1-exp(-x))+(2-exp(x)).*(exp(-x)-exp(-z))) );
-zz = 1:0.001:10;
+% % pr3steps = @(x,z)(-1*(1-exp(-x)).*(exp(-x)-exp(x-z)).*(1-exp(x-z))./(2-exp(-x)-exp(x-z)).^2 ...
+% %     + 1./(2-exp(-x)-exp(x-z)).*((2*exp(-x)-1).*(1-exp(-x))+(2-exp(x)).*(exp(-x)-exp(-z))) );
+% % zz = 1:0.001:10;
 % % 2 steps
 % % Rtheory = (1-exp(-2*z))./(4*(1-exp(-1*z)));
 % % Ttheory = z.*exp(-z)./(2*(1-exp(-1*z)));
 % % three steps
 % % Rtheory=[];Ttheory=[];
-for ii = 1:length(zz)
-    [Rtheory(ii),eb(ii)] = quadgk(@(x)pr3steps(x,zz(ii)),0,zz(ii));
-%     Ttheory(ii) = quadgk(@(x)pt3steps(x,zz(ii)),0,zz(ii));
-end
-figure;
-hold on;
-plot(zz,Rtheory,'b' )
-% % plot(zz,Ttheory,'r' )
-plot(opticalDepths, rCalc, 'b.')
+% for ii = 1:length(zz)
+%     [Rtheory(ii),eb(ii)] = quadgk(@(x)pr3steps(x,zz(ii)),0,zz(ii));
+% %     Ttheory(ii) = quadgk(@(x)pt3steps(x,zz(ii)),0,zz(ii));
+% end
+% figure;
+% hold on;
+% plot(zz,Rtheory,'b' )
+% % % plot(zz,Ttheory,'r' )
+% plot(opticalDepths, rCalc, 'b.')
 % % plot(opticalDepths, tCalc,'r.')
 % % % % grid on
 % % ylim([0 1])
@@ -81,9 +81,9 @@ plot(opticalDepths, rCalc, 'b.')
 % % grid on
 % % title(sprintf('Theoretical vs calculated probability of reflection/transmission at step 2'))
 
-mask = (results.displacements<0 & results.nSteps == 3);
+mask = (results.displacements<0 & results.nSteps == 2);
 histogram( results.distances(mask),'normalization', 'pdf' );hold on;
-plot(0:0.01:10,gampdf(0:0.01:10,3,1))
+plot(0:0.01:10,gampdf(0:0.01:10,2,1))
 
 
 
