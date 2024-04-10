@@ -7,8 +7,8 @@ addpath( possiblePaths{ispc+1} );%Monte Carlo Code
 input=struct();
 %% Input parameters
 ssa = 1;%Single scattering albedo: P(scattered)
-nPhotons = 8000; %Number of photons to simulate
-opticalDepths = [0.001,0.5:0.5:20]; %Optical depths of the cloud
+nPhotons = 15000; %Number of photons to simulate
+opticalDepths = [ 2 ]; %Optical depths of the cloud
 meanFreePath = 1; %Mean free path: Mean distance traveled before interaction 
 g = 0;%Asymmetry parameter = E[cos(\theta)] where theta is the scattering angle
 %Flags
